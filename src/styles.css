@@ -1,0 +1,486 @@
+:root {
+  color: #172033;
+  background: #f6f4ee;
+  font-family:
+    Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
+  font-synthesis: none;
+  line-height: 1.5;
+  text-rendering: optimizeLegibility;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  min-width: 320px;
+  min-height: 100vh;
+  margin: 0;
+}
+
+button,
+input,
+select {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.app-shell {
+  min-height: 100vh;
+  background:
+    linear-gradient(135deg, rgba(37, 99, 235, 0.08), transparent 32%),
+    linear-gradient(225deg, rgba(194, 65, 12, 0.09), transparent 28%),
+    #f6f4ee;
+}
+
+.hero-band {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(320px, 520px);
+  gap: 24px;
+  align-items: end;
+  width: min(1180px, calc(100% - 32px));
+  margin: 0 auto;
+  padding: 44px 0 24px;
+}
+
+.hero-copy h1 {
+  max-width: 780px;
+  margin: 0;
+  color: #111827;
+  font-size: clamp(2.2rem, 5vw, 4.8rem);
+  line-height: 0.98;
+  letter-spacing: 0;
+}
+
+.hero-text {
+  max-width: 640px;
+  margin: 18px 0 0;
+  color: #536071;
+  font-size: 1.05rem;
+}
+
+.eyebrow {
+  margin: 0 0 8px;
+  color: #475569;
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.onboarding-panel,
+.character-panel,
+.quest-form,
+.summary-panel {
+  border: 1px solid rgba(23, 32, 51, 0.12);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.86);
+  box-shadow: 0 18px 45px rgba(30, 41, 59, 0.08);
+}
+
+.onboarding-panel {
+  padding: 18px;
+}
+
+.onboarding-panel label {
+  display: block;
+  margin-bottom: 10px;
+  color: #334155;
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.inline-field {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 150px auto;
+  gap: 10px;
+}
+
+input,
+select {
+  width: 100%;
+  min-height: 42px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #111827;
+  outline: none;
+  padding: 0 12px;
+}
+
+input:focus,
+select:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.14);
+}
+
+.inline-field button,
+.primary-button,
+.secondary-button,
+.icon-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 42px;
+  border: 0;
+  border-radius: 6px;
+  font-weight: 800;
+}
+
+.inline-field button,
+.primary-button {
+  background: #111827;
+  color: #ffffff;
+  padding: 0 16px;
+}
+
+.secondary-button {
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  color: #172033;
+  padding: 0 14px;
+}
+
+.full-width {
+  width: 100%;
+}
+
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: 280px minmax(0, 1fr) 320px;
+  gap: 18px;
+  width: min(1180px, calc(100% - 32px));
+  margin: 0 auto;
+  padding: 0 0 36px;
+}
+
+.character-panel,
+.quest-column,
+.side-stack {
+  min-width: 0;
+}
+
+.character-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 18px;
+}
+
+.avatar-ring {
+  display: grid;
+  width: 92px;
+  height: 92px;
+  place-items: center;
+  border: 2px solid #111827;
+  border-radius: 50%;
+  background: #facc15;
+  color: #111827;
+}
+
+h2,
+h3 {
+  margin: 0;
+  color: #111827;
+  line-height: 1.15;
+  letter-spacing: 0;
+}
+
+.muted {
+  margin: 4px 0 0;
+  color: #64748b;
+}
+
+.stat-row,
+.attribute-list div,
+.section-heading,
+.quest-card,
+.event-list div,
+.achievement-list div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.progress-track {
+  width: 100%;
+  height: 10px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #e2e8f0;
+}
+
+.progress-track span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #2563eb, #16a34a);
+}
+
+.resource-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.resource-grid div {
+  display: grid;
+  gap: 4px;
+  min-height: 88px;
+  border: 1px solid #dbe2ea;
+  border-radius: 8px;
+  background: #f8fafc;
+  padding: 12px;
+}
+
+.resource-grid span {
+  font-size: 1.3rem;
+  font-weight: 900;
+}
+
+.resource-grid small,
+.event-list small {
+  color: #64748b;
+}
+
+.attribute-list {
+  display: grid;
+  gap: 8px;
+}
+
+.attribute-list div {
+  border-bottom: 1px solid #e2e8f0;
+  padding-bottom: 8px;
+  text-transform: capitalize;
+}
+
+.quest-column {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.section-heading {
+  margin-bottom: 0;
+}
+
+.section-heading.compact {
+  margin-bottom: 14px;
+}
+
+.completion-pill {
+  border-radius: 999px;
+  background: #dcfce7;
+  color: #166534;
+  padding: 7px 12px;
+  font-size: 0.85rem;
+  font-weight: 900;
+}
+
+.quest-form {
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.quest-list {
+  display: grid;
+  gap: 10px;
+}
+
+.quest-card {
+  border: 1px solid rgba(23, 32, 51, 0.11);
+  border-radius: 8px;
+  background: #ffffff;
+  padding: 14px;
+}
+
+.quest-card.complete {
+  background: #f0fdf4;
+}
+
+.quest-icon {
+  display: grid;
+  flex: 0 0 42px;
+  width: 42px;
+  height: 42px;
+  place-items: center;
+  border-radius: 8px;
+  background: #f1f5f9;
+}
+
+.quest-card > div:nth-child(2) {
+  min-width: 0;
+  flex: 1;
+}
+
+.quest-card h3,
+.quest-card p,
+.event-list span {
+  overflow-wrap: anywhere;
+}
+
+.quest-card p {
+  margin: 5px 0 0;
+  color: #64748b;
+  font-size: 0.9rem;
+}
+
+.quest-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.icon-button {
+  width: 38px;
+  height: 38px;
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  color: #1f2937;
+}
+
+.icon-button.danger {
+  color: #b91c1c;
+}
+
+.side-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.summary-panel {
+  padding: 16px;
+}
+
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.summary-grid div {
+  display: grid;
+  gap: 2px;
+  border-radius: 8px;
+  background: #f8fafc;
+  padding: 10px;
+}
+
+.summary-grid strong {
+  font-size: 1.4rem;
+}
+
+.summary-grid span {
+  color: #64748b;
+  font-size: 0.82rem;
+}
+
+.achievement-list,
+.event-list {
+  display: grid;
+  gap: 9px;
+}
+
+.achievement-list div {
+  justify-content: flex-start;
+  border-bottom: 1px solid #e2e8f0;
+  padding-bottom: 9px;
+  font-weight: 800;
+}
+
+.achievement-list .locked {
+  color: #94a3b8;
+}
+
+.event-list div {
+  align-items: flex-start;
+  flex-direction: column;
+  border-bottom: 1px solid #e2e8f0;
+  padding-bottom: 9px;
+}
+
+.event-list strong {
+  color: #166534;
+  font-size: 0.9rem;
+}
+
+.empty-state {
+  display: grid;
+  min-height: 180px;
+  place-items: center;
+  border: 1px dashed #94a3b8;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.68);
+  color: #64748b;
+  text-align: center;
+  padding: 24px;
+}
+
+@media (max-width: 1020px) {
+  .hero-band,
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .character-panel {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: center;
+  }
+
+  .character-panel .stat-row,
+  .character-panel .progress-track,
+  .character-panel .resource-grid,
+  .character-panel .attribute-list,
+  .character-panel .secondary-button {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 700px) {
+  .hero-band,
+  .dashboard-grid {
+    width: min(100% - 20px, 1180px);
+  }
+
+  .hero-band {
+    padding-top: 28px;
+  }
+
+  .hero-copy h1 {
+    font-size: 2.4rem;
+  }
+
+  .inline-field,
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .quest-card {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .quest-actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+}
