@@ -2,7 +2,12 @@
   color: #172033;
   background: #f6f4ee;
   font-family:
-    Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    Inter,
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
     sans-serif;
   font-synthesis: none;
   line-height: 1.5;
@@ -38,8 +43,7 @@ button:disabled {
   min-height: 100vh;
   background:
     linear-gradient(135deg, rgba(37, 99, 235, 0.08), transparent 32%),
-    linear-gradient(225deg, rgba(194, 65, 12, 0.09), transparent 28%),
-    #f6f4ee;
+    linear-gradient(225deg, rgba(194, 65, 12, 0.09), transparent 28%), #f6f4ee;
 }
 
 .hero-band {
@@ -297,6 +301,12 @@ h3 {
 .form-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.form-actions {
+  display: flex;
+  flex-wrap: wrap;
   gap: 10px;
 }
 

@@ -16,6 +16,7 @@ The MVP focuses on a complete single-player loop:
 - Daily quest board.
 - One-time, daily, weekday, and weekly quests.
 - Quest categories mapped to RPG attributes.
+- Edit and archive quests.
 - Difficulty-based XP and coin rewards.
 - Level progression and energy.
 - Recovery mechanic using earned coins.
@@ -57,6 +58,22 @@ Run lint checks:
 ```bash
 npm run lint
 ```
+
+Run tests:
+
+```bash
+npm run test
+```
+
+Check formatting:
+
+```bash
+npm run format:check
+```
+
+## Deployment
+
+The app is configured for static hosting. The public repository can be deployed with GitHub Pages by publishing the generated `dist` folder from the `main` branch workflow.
 
 ## Product Direction
 

@@ -35,7 +35,7 @@ Status: MVP implemented as a local-first React application. Backend, public beta
 - [x] Show basic weekly progress summary.
 - [x] Add empty states for new users.
 - [x] Add archive/delete flow for tasks.
-- [ ] Add full task editing flow.
+- [x] Add full task editing flow.
 
 ## Data Model
 
@@ -69,10 +69,10 @@ Status: MVP implemented as a local-first React application. Backend, public beta
 - [x] Choose the stack: React, TypeScript, Vite, CSS, localStorage.
 - [x] Initialize the frontend project.
 - [x] Set up linting.
-- [ ] Set up formatting.
+- [x] Set up formatting.
 - [ ] Set up environment variables when backend or analytics are added.
 - [x] Add local development scripts.
-- [ ] Add a basic test setup.
+- [x] Add a basic test setup.
 - [x] Add project README.
 - [x] Add deployment-ready Vite build configuration.
 
@@ -101,7 +101,7 @@ Status: MVP implemented as a local-first React application. Backend, public beta
 - [ ] Add privacy policy and terms if user accounts are enabled.
 - [ ] Add basic analytics.
 - [ ] Add feedback channel.
-- [ ] Deploy to production.
+- [ ] Deploy to production with GitHub Pages.
 - [ ] Create a short demo video or GIF.
 - [ ] Share with a small beta group.
 

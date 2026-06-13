@@ -9,6 +9,7 @@ import {
   HeartHandshake,
   Home,
   Palette,
+  Pencil,
   Plus,
   RotateCcw,
   ShieldCheck,
@@ -17,128 +18,171 @@ import {
   Target,
   Trash2,
   Trophy,
-} from 'lucide-react'
-import { FormEvent, useEffect, useMemo, useState } from 'react'
+  X,
+} from "lucide-react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
+import {
+  applyXp,
+  calculateReward,
+  categoryAttributes,
+  difficultyRewards,
+  shouldDropItem,
+  type AttributeKey,
+  type Category,
+  type Difficulty,
+} from "./game";
 
-type Category = 'learning' | 'work' | 'health' | 'creativity' | 'social' | 'order'
-type Difficulty = 'easy' | 'normal' | 'hard' | 'epic'
-type Recurrence = 'once' | 'daily' | 'weekdays' | 'weekly'
-type HeroClass = 'Pathfinder' | 'Scholar' | 'Artisan' | 'Vanguard'
-
-type AttributeKey = 'focus' | 'vitality' | 'craft' | 'connection' | 'discipline'
+type Recurrence = "once" | "daily" | "weekdays" | "weekly";
+type HeroClass = "Pathfinder" | "Scholar" | "Artisan" | "Vanguard";
 
 type Character = {
-  name: string
-  heroClass: HeroClass
-  level: number
-  xp: number
-  coins: number
-  energy: number
-  title: string
-  attributes: Record<AttributeKey, number>
-}
+  name: string;
+  heroClass: HeroClass;
+  level: number;
+  xp: number;
+  coins: number;
+  energy: number;
+  title: string;
+  attributes: Record<AttributeKey, number>;
+};
 
 type Quest = {
-  id: string
-  title: string
-  category: Category
-  difficulty: Difficulty
-  recurrence: Recurrence
-  estimate: number
-  createdAt: string
-  completedDates: string[]
-  archived: boolean
-}
+  id: string;
+  title: string;
+  category: Category;
+  difficulty: Difficulty;
+  recurrence: Recurrence;
+  estimate: number;
+  createdAt: string;
+  completedDates: string[];
+  archived: boolean;
+};
 
 type RewardEvent = {
-  id: string
-  questTitle: string
-  xp: number
-  coins: number
-  attribute: AttributeKey
-  date: string
-  item?: string
-}
+  id: string;
+  questTitle: string;
+  xp: number;
+  coins: number;
+  attribute: AttributeKey;
+  date: string;
+  item?: string;
+};
 
 type Achievement = {
-  id: string
-  title: string
-  description: string
-  unlockedAt?: string
-}
+  id: string;
+  title: string;
+  description: string;
+  unlockedAt?: string;
+};
 
 type AppState = {
-  character: Character
-  quests: Quest[]
-  rewardEvents: RewardEvent[]
-  achievements: Achievement[]
-}
+  character: Character;
+  quests: Quest[];
+  rewardEvents: RewardEvent[];
+  achievements: Achievement[];
+};
 
-const storageKey = 'personal-task-rpg-state-v1'
+const storageKey = "personal-task-rpg-state-v1";
 
 const categoryConfig: Record<
   Category,
   {
-    label: string
-    attribute: AttributeKey
-    icon: typeof BookOpen
-    color: string
+    label: string;
+    attribute: AttributeKey;
+    icon: typeof BookOpen;
+    color: string;
   }
 > = {
-  learning: { label: 'Learning', attribute: 'focus', icon: BookOpen, color: '#2563eb' },
-  work: { label: 'Work', attribute: 'discipline', icon: Target, color: '#4f46e5' },
-  health: { label: 'Health', attribute: 'vitality', icon: Dumbbell, color: '#059669' },
-  creativity: { label: 'Creativity', attribute: 'craft', icon: Palette, color: '#c2410c' },
-  social: { label: 'Social', attribute: 'connection', icon: HeartHandshake, color: '#be123c' },
-  order: { label: 'Life Order', attribute: 'discipline', icon: Home, color: '#475569' },
-}
+  learning: {
+    label: "Learning",
+    attribute: "focus",
+    icon: BookOpen,
+    color: "#2563eb",
+  },
+  work: {
+    label: "Work",
+    attribute: "discipline",
+    icon: Target,
+    color: "#4f46e5",
+  },
+  health: {
+    label: "Health",
+    attribute: "vitality",
+    icon: Dumbbell,
+    color: "#059669",
+  },
+  creativity: {
+    label: "Creativity",
+    attribute: "craft",
+    icon: Palette,
+    color: "#c2410c",
+  },
+  social: {
+    label: "Social",
+    attribute: "connection",
+    icon: HeartHandshake,
+    color: "#be123c",
+  },
+  order: {
+    label: "Life Order",
+    attribute: "discipline",
+    icon: Home,
+    color: "#475569",
+  },
+};
 
-const difficultyConfig: Record<Difficulty, { label: string; xp: number; coins: number }> = {
-  easy: { label: 'Easy', xp: 20, coins: 8 },
-  normal: { label: 'Normal', xp: 45, coins: 16 },
-  hard: { label: 'Hard', xp: 80, coins: 28 },
-  epic: { label: 'Epic', xp: 140, coins: 50 },
-}
+const difficultyConfig: Record<
+  Difficulty,
+  { label: string; xp: number; coins: number }
+> = {
+  easy: { label: "Easy", ...difficultyRewards.easy },
+  normal: { label: "Normal", ...difficultyRewards.normal },
+  hard: { label: "Hard", ...difficultyRewards.hard },
+  epic: { label: "Epic", ...difficultyRewards.epic },
+};
 
-const heroClassBonus: Record<HeroClass, Partial<Record<AttributeKey, number>>> = {
+const heroClassBonus: Record<
+  HeroClass,
+  Partial<Record<AttributeKey, number>>
+> = {
   Pathfinder: { vitality: 2, discipline: 1 },
   Scholar: { focus: 3 },
   Artisan: { craft: 2, focus: 1 },
   Vanguard: { discipline: 2, connection: 1 },
-}
+};
 
 const starterAchievements: Achievement[] = [
   {
-    id: 'first-quest',
-    title: 'First Clear',
-    description: 'Complete your first quest.',
+    id: "first-quest",
+    title: "First Clear",
+    description: "Complete your first quest.",
   },
   {
-    id: 'five-quests',
-    title: 'Momentum',
-    description: 'Complete 5 quests.',
+    id: "five-quests",
+    title: "Momentum",
+    description: "Complete 5 quests.",
   },
   {
-    id: 'balanced-growth',
-    title: 'Balanced Build',
-    description: 'Complete quests in 3 different categories.',
+    id: "balanced-growth",
+    title: "Balanced Build",
+    description: "Complete quests in 3 different categories.",
   },
   {
-    id: 'level-3',
-    title: 'Level 3 Adventurer',
-    description: 'Reach character level 3.',
+    id: "level-3",
+    title: "Level 3 Adventurer",
+    description: "Reach character level 3.",
   },
-]
+];
 
 const defaultState: AppState = {
   character: {
-    name: 'New Adventurer',
-    heroClass: 'Pathfinder',
+    name: "New Adventurer",
+    heroClass: "Pathfinder",
     level: 1,
     xp: 0,
     coins: 0,
     energy: 85,
-    title: 'Rookie of the Real World',
+    title: "Rookie of the Real World",
     attributes: {
       focus: 3,
       vitality: 3,
@@ -150,10 +194,10 @@ const defaultState: AppState = {
   quests: [
     {
       id: crypto.randomUUID(),
-      title: 'Plan tomorrow in 10 minutes',
-      category: 'order',
-      difficulty: 'easy',
-      recurrence: 'daily',
+      title: "Plan tomorrow in 10 minutes",
+      category: "order",
+      difficulty: "easy",
+      recurrence: "daily",
       estimate: 10,
       createdAt: new Date().toISOString(),
       completedDates: [],
@@ -161,10 +205,10 @@ const defaultState: AppState = {
     },
     {
       id: crypto.randomUUID(),
-      title: 'Deep work sprint',
-      category: 'work',
-      difficulty: 'hard',
-      recurrence: 'weekdays',
+      title: "Deep work sprint",
+      category: "work",
+      difficulty: "hard",
+      recurrence: "weekdays",
       estimate: 60,
       createdAt: new Date().toISOString(),
       completedDates: [],
@@ -172,10 +216,10 @@ const defaultState: AppState = {
     },
     {
       id: crypto.randomUUID(),
-      title: 'Move your body',
-      category: 'health',
-      difficulty: 'normal',
-      recurrence: 'daily',
+      title: "Move your body",
+      category: "health",
+      difficulty: "normal",
+      recurrence: "daily",
       estimate: 30,
       createdAt: new Date().toISOString(),
       completedDates: [],
@@ -184,104 +228,93 @@ const defaultState: AppState = {
   ],
   rewardEvents: [],
   achievements: starterAchievements,
-}
+};
 
 function todayKey(date = new Date()) {
-  return date.toISOString().slice(0, 10)
+  return date.toISOString().slice(0, 10);
 }
 
 function weekStart(date = new Date()) {
-  const copy = new Date(date)
-  const day = copy.getDay()
-  const diff = copy.getDate() - day + (day === 0 ? -6 : 1)
-  copy.setDate(diff)
-  copy.setHours(0, 0, 0, 0)
-  return copy
+  const copy = new Date(date);
+  const day = copy.getDay();
+  const diff = copy.getDate() - day + (day === 0 ? -6 : 1);
+  copy.setDate(diff);
+  copy.setHours(0, 0, 0, 0);
+  return copy;
 }
 
 function isQuestDueToday(quest: Quest) {
-  if (quest.archived) return false
-  const now = new Date()
-  const day = now.getDay()
-  if (quest.recurrence === 'daily') return true
-  if (quest.recurrence === 'weekdays') return day >= 1 && day <= 5
-  if (quest.recurrence === 'weekly') {
-    const createdDay = new Date(quest.createdAt).getDay()
-    return createdDay === day
+  if (quest.archived) return false;
+  const now = new Date();
+  const day = now.getDay();
+  if (quest.recurrence === "daily") return true;
+  if (quest.recurrence === "weekdays") return day >= 1 && day <= 5;
+  if (quest.recurrence === "weekly") {
+    const createdDay = new Date(quest.createdAt).getDay();
+    return createdDay === day;
   }
-  return quest.completedDates.length === 0
+  return quest.completedDates.length === 0;
 }
 
 function xpForNextLevel(level: number) {
-  return 120 + (level - 1) * 80
-}
-
-function applyXp(character: Character, xpGain: number) {
-  let level = character.level
-  let xp = character.xp + xpGain
-  while (xp >= xpForNextLevel(level)) {
-    xp -= xpForNextLevel(level)
-    level += 1
-  }
-  return { level, xp }
-}
-
-function shouldDropItem(quest: Quest) {
-  const idScore = Array.from(quest.id).reduce((sum, char) => sum + char.charCodeAt(0), 0)
-  return (idScore + quest.completedDates.length) % 3 === 0
+  return 120 + (level - 1) * 80;
 }
 
 function loadState(): AppState {
-  const raw = localStorage.getItem(storageKey)
-  if (!raw) return defaultState
+  const raw = localStorage.getItem(storageKey);
+  if (!raw) return defaultState;
   try {
-    const parsed = JSON.parse(raw) as AppState
+    const parsed = JSON.parse(raw) as AppState;
     return {
       ...defaultState,
       ...parsed,
       achievements: starterAchievements.map((achievement) => {
-        const existing = parsed.achievements?.find((item) => item.id === achievement.id)
-        return existing ?? achievement
+        const existing = parsed.achievements?.find(
+          (item) => item.id === achievement.id,
+        );
+        return existing ?? achievement;
       }),
-    }
+    };
   } catch {
-    return defaultState
+    return defaultState;
   }
 }
 
 function className(...parts: Array<string | false | undefined>) {
-  return parts.filter(Boolean).join(' ')
+  return parts.filter(Boolean).join(" ");
 }
 
 function evaluateAchievements(state: AppState): Achievement[] {
-  const completedCount = state.rewardEvents.length
+  const completedCount = state.rewardEvents.length;
   const completedCategories = new Set(
     state.quests
       .filter((quest) => quest.completedDates.length > 0)
       .map((quest) => quest.category),
-  )
+  );
   return state.achievements.map((achievement) => {
-    if (achievement.unlockedAt) return achievement
+    if (achievement.unlockedAt) return achievement;
     const unlocked =
-      (achievement.id === 'first-quest' && completedCount >= 1) ||
-      (achievement.id === 'five-quests' && completedCount >= 5) ||
-      (achievement.id === 'balanced-growth' && completedCategories.size >= 3) ||
-      (achievement.id === 'level-3' && state.character.level >= 3)
-    return unlocked ? { ...achievement, unlockedAt: new Date().toISOString() } : achievement
-  })
+      (achievement.id === "first-quest" && completedCount >= 1) ||
+      (achievement.id === "five-quests" && completedCount >= 5) ||
+      (achievement.id === "balanced-growth" && completedCategories.size >= 3) ||
+      (achievement.id === "level-3" && state.character.level >= 3);
+    return unlocked
+      ? { ...achievement, unlockedAt: new Date().toISOString() }
+      : achievement;
+  });
 }
 
 function createInitialCharacter(name: string, heroClass: HeroClass): Character {
-  const attributes: Character['attributes'] = {
+  const attributes: Character["attributes"] = {
     focus: 3,
     vitality: 3,
     craft: 3,
     connection: 3,
     discipline: 3,
-  }
-  const bonus = heroClassBonus[heroClass]
+  };
+  const bonus = heroClassBonus[heroClass];
   for (const key of Object.keys(bonus) as AttributeKey[]) {
-    attributes[key] += bonus[key] ?? 0
+    attributes[key] += bonus[key] ?? 0;
   }
   return {
     ...defaultState.character,
@@ -289,58 +322,94 @@ function createInitialCharacter(name: string, heroClass: HeroClass): Character {
     heroClass,
     attributes,
     title: `${heroClass} in Training`,
-  }
+  };
 }
 
 export default function App() {
-  const [state, setState] = useState<AppState>(() => loadState())
-  const [characterName, setCharacterName] = useState('')
-  const [heroClass, setHeroClass] = useState<HeroClass>('Pathfinder')
-  const [questTitle, setQuestTitle] = useState('')
-  const [category, setCategory] = useState<Category>('learning')
-  const [difficulty, setDifficulty] = useState<Difficulty>('normal')
-  const [recurrence, setRecurrence] = useState<Recurrence>('once')
-  const [estimate, setEstimate] = useState(25)
+  const [state, setState] = useState<AppState>(() => loadState());
+  const [characterName, setCharacterName] = useState("");
+  const [heroClass, setHeroClass] = useState<HeroClass>("Pathfinder");
+  const [questTitle, setQuestTitle] = useState("");
+  const [category, setCategory] = useState<Category>("learning");
+  const [difficulty, setDifficulty] = useState<Difficulty>("normal");
+  const [recurrence, setRecurrence] = useState<Recurrence>("once");
+  const [estimate, setEstimate] = useState(25);
+  const [editingQuestId, setEditingQuestId] = useState<string | null>(null);
 
   useEffect(() => {
-    localStorage.setItem(storageKey, JSON.stringify(state))
-  }, [state])
+    localStorage.setItem(storageKey, JSON.stringify(state));
+  }, [state]);
 
-  const today = todayKey()
-  const dueQuests = useMemo(() => state.quests.filter(isQuestDueToday), [state.quests])
-  const completedToday = dueQuests.filter((quest) => quest.completedDates.includes(today))
+  const today = todayKey();
+  const dueQuests = useMemo(
+    () => state.quests.filter(isQuestDueToday),
+    [state.quests],
+  );
+  const completedToday = dueQuests.filter((quest) =>
+    quest.completedDates.includes(today),
+  );
   const completionRate = dueQuests.length
     ? Math.round((completedToday.length / dueQuests.length) * 100)
-    : 0
-  const nextLevelXp = xpForNextLevel(state.character.level)
+    : 0;
+  const nextLevelXp = xpForNextLevel(state.character.level);
   const weeklyEvents = state.rewardEvents.filter(
     (event) => new Date(event.date) >= weekStart(),
-  )
-  const weeklyXp = weeklyEvents.reduce((sum, event) => sum + event.xp, 0)
-  const weeklyCoins = weeklyEvents.reduce((sum, event) => sum + event.coins, 0)
-  const unlockedAchievements = state.achievements.filter((item) => item.unlockedAt)
-  const latestEvents = state.rewardEvents.slice(0, 6)
+  );
+  const weeklyXp = weeklyEvents.reduce((sum, event) => sum + event.xp, 0);
+  const weeklyCoins = weeklyEvents.reduce((sum, event) => sum + event.coins, 0);
+  const unlockedAchievements = state.achievements.filter(
+    (item) => item.unlockedAt,
+  );
+  const latestEvents = state.rewardEvents.slice(0, 6);
 
   function updateState(updater: (current: AppState) => AppState) {
     setState((current) => {
-      const next = updater(current)
-      return { ...next, achievements: evaluateAchievements(next) }
-    })
+      const next = updater(current);
+      return { ...next, achievements: evaluateAchievements(next) };
+    });
   }
 
   function handleOnboarding(event: FormEvent) {
-    event.preventDefault()
-    const name = characterName.trim() || 'New Adventurer'
+    event.preventDefault();
+    const name = characterName.trim() || "New Adventurer";
     updateState((current) => ({
       ...current,
       character: createInitialCharacter(name, heroClass),
-    }))
+    }));
+  }
+
+  function resetQuestForm() {
+    setQuestTitle("");
+    setCategory("learning");
+    setDifficulty("normal");
+    setRecurrence("once");
+    setEstimate(25);
+    setEditingQuestId(null);
   }
 
   function addQuest(event: FormEvent) {
-    event.preventDefault()
-    const title = questTitle.trim()
-    if (!title) return
+    event.preventDefault();
+    const title = questTitle.trim();
+    if (!title) return;
+    if (editingQuestId) {
+      updateState((current) => ({
+        ...current,
+        quests: current.quests.map((quest) =>
+          quest.id === editingQuestId
+            ? {
+                ...quest,
+                title,
+                category,
+                difficulty,
+                recurrence,
+                estimate,
+              }
+            : quest,
+        ),
+      }));
+      resetQuestForm();
+      return;
+    }
     const quest: Quest = {
       id: crypto.randomUUID(),
       title,
@@ -351,26 +420,24 @@ export default function App() {
       createdAt: new Date().toISOString(),
       completedDates: [],
       archived: false,
-    }
-    updateState((current) => ({ ...current, quests: [quest, ...current.quests] }))
-    setQuestTitle('')
-    setCategory('learning')
-    setDifficulty('normal')
-    setRecurrence('once')
-    setEstimate(25)
+    };
+    updateState((current) => ({
+      ...current,
+      quests: [quest, ...current.quests],
+    }));
+    resetQuestForm();
   }
 
   function completeQuest(quest: Quest) {
-    if (quest.completedDates.includes(today)) return
-    const reward = difficultyConfig[quest.difficulty]
-    const attribute = categoryConfig[quest.category].attribute
-    const estimatedBonus = Math.min(Math.floor(quest.estimate / 20) * 5, 25)
-    const xp = reward.xp + estimatedBonus
-    const coins = reward.coins + Math.floor(quest.estimate / 15)
-    const item = shouldDropItem(quest) ? `${categoryConfig[quest.category].label} token` : undefined
+    if (quest.completedDates.includes(today)) return;
+    const { xp, coins } = calculateReward(quest);
+    const attribute = categoryAttributes[quest.category];
+    const item = shouldDropItem(quest.id, quest.completedDates.length)
+      ? `${categoryConfig[quest.category].label} token`
+      : undefined;
 
     updateState((current) => {
-      const leveled = applyXp(current.character, xp)
+      const leveled = applyXp(current.character, xp);
       return {
         ...current,
         character: {
@@ -379,7 +446,10 @@ export default function App() {
           level: leveled.level,
           coins: current.character.coins + coins,
           energy: Math.max(15, current.character.energy - 6),
-          title: leveled.level >= 3 ? 'Reliable Quest Finisher' : current.character.title,
+          title:
+            leveled.level >= 3
+              ? "Reliable Quest Finisher"
+              : current.character.title,
           attributes: {
             ...current.character.attributes,
             [attribute]: current.character.attributes[attribute] + 1,
@@ -387,7 +457,10 @@ export default function App() {
         },
         quests: current.quests.map((itemQuest) =>
           itemQuest.id === quest.id
-            ? { ...itemQuest, completedDates: [today, ...itemQuest.completedDates] }
+            ? {
+                ...itemQuest,
+                completedDates: [today, ...itemQuest.completedDates],
+              }
             : itemQuest,
         ),
         rewardEvents: [
@@ -402,8 +475,8 @@ export default function App() {
           },
           ...current.rewardEvents,
         ],
-      }
-    })
+      };
+    });
   }
 
   function recoverEnergy() {
@@ -414,7 +487,7 @@ export default function App() {
         coins: Math.max(0, current.character.coins - 10),
         energy: Math.min(100, current.character.energy + 35),
       },
-    }))
+    }));
   }
 
   function deleteQuest(id: string) {
@@ -423,12 +496,24 @@ export default function App() {
       quests: current.quests.map((quest) =>
         quest.id === id ? { ...quest, archived: true } : quest,
       ),
-    }))
+    }));
+    if (editingQuestId === id) {
+      resetQuestForm();
+    }
+  }
+
+  function startEditingQuest(quest: Quest) {
+    setEditingQuestId(quest.id);
+    setQuestTitle(quest.title);
+    setCategory(quest.category);
+    setDifficulty(quest.difficulty);
+    setRecurrence(quest.recurrence);
+    setEstimate(quest.estimate);
   }
 
   function resetDemo() {
-    localStorage.removeItem(storageKey)
-    setState(defaultState)
+    localStorage.removeItem(storageKey);
+    setState(defaultState);
   }
 
   return (
@@ -438,8 +523,8 @@ export default function App() {
           <p className="eyebrow">Personal Task RPG</p>
           <h1>Turn real work into quests that level up your character.</h1>
           <p className="hero-text">
-            A local-first MVP for daily quests, XP, coins, attributes, achievements,
-            and weekly progress.
+            A local-first MVP for daily quests, XP, coins, attributes,
+            achievements, and weekly progress.
           </p>
         </div>
         <form className="onboarding-panel" onSubmit={handleOnboarding}>
@@ -454,7 +539,9 @@ export default function App() {
             <select
               aria-label="Hero class"
               value={heroClass}
-              onChange={(event) => setHeroClass(event.target.value as HeroClass)}
+              onChange={(event) =>
+                setHeroClass(event.target.value as HeroClass)
+              }
             >
               <option>Pathfinder</option>
               <option>Scholar</option>
@@ -487,7 +574,11 @@ export default function App() {
             </strong>
           </div>
           <div className="progress-track">
-            <span style={{ width: `${Math.min((state.character.xp / nextLevelXp) * 100, 100)}%` }} />
+            <span
+              style={{
+                width: `${Math.min((state.character.xp / nextLevelXp) * 100, 100)}%`,
+              }}
+            />
           </div>
 
           <div className="resource-grid">
@@ -504,17 +595,23 @@ export default function App() {
           </div>
 
           <div className="attribute-list">
-            {(Object.entries(state.character.attributes) as Array<[AttributeKey, number]>).map(
-              ([key, value]) => (
-                <div key={key}>
-                  <span>{key}</span>
-                  <strong>{value}</strong>
-                </div>
-              ),
-            )}
+            {(
+              Object.entries(state.character.attributes) as Array<
+                [AttributeKey, number]
+              >
+            ).map(([key, value]) => (
+              <div key={key}>
+                <span>{key}</span>
+                <strong>{value}</strong>
+              </div>
+            ))}
           </div>
 
-          <button className="secondary-button" onClick={recoverEnergy} disabled={state.character.coins < 10}>
+          <button
+            className="secondary-button"
+            onClick={recoverEnergy}
+            disabled={state.character.coins < 10}
+          >
             <RotateCcw size={17} />
             Recover for 10 coins
           </button>
@@ -536,7 +633,12 @@ export default function App() {
               placeholder="Add a quest, such as Read 20 pages"
             />
             <div className="form-grid">
-              <select value={category} onChange={(event) => setCategory(event.target.value as Category)}>
+              <select
+                value={category}
+                onChange={(event) =>
+                  setCategory(event.target.value as Category)
+                }
+              >
                 {Object.entries(categoryConfig).map(([key, config]) => (
                   <option key={key} value={key}>
                     {config.label}
@@ -545,7 +647,9 @@ export default function App() {
               </select>
               <select
                 value={difficulty}
-                onChange={(event) => setDifficulty(event.target.value as Difficulty)}
+                onChange={(event) =>
+                  setDifficulty(event.target.value as Difficulty)
+                }
               >
                 {Object.entries(difficultyConfig).map(([key, config]) => (
                   <option key={key} value={key}>
@@ -555,7 +659,9 @@ export default function App() {
               </select>
               <select
                 value={recurrence}
-                onChange={(event) => setRecurrence(event.target.value as Recurrence)}
+                onChange={(event) =>
+                  setRecurrence(event.target.value as Recurrence)
+                }
               >
                 <option value="once">Once</option>
                 <option value="daily">Daily</option>
@@ -572,10 +678,22 @@ export default function App() {
                 aria-label="Estimated minutes"
               />
             </div>
-            <button type="submit" className="primary-button">
-              <Plus size={18} />
-              Add quest
-            </button>
+            <div className="form-actions">
+              <button type="submit" className="primary-button">
+                {editingQuestId ? <Pencil size={18} /> : <Plus size={18} />}
+                {editingQuestId ? "Save quest" : "Add quest"}
+              </button>
+              {editingQuestId ? (
+                <button
+                  type="button"
+                  className="secondary-button"
+                  onClick={resetQuestForm}
+                >
+                  <X size={18} />
+                  Cancel
+                </button>
+              ) : null}
+            </div>
           </form>
 
           <div className="quest-list">
@@ -586,19 +704,23 @@ export default function App() {
               </div>
             ) : (
               dueQuests.map((quest) => {
-                const config = categoryConfig[quest.category]
-                const Icon = config.icon
-                const completed = quest.completedDates.includes(today)
+                const config = categoryConfig[quest.category];
+                const Icon = config.icon;
+                const completed = quest.completedDates.includes(today);
                 return (
-                  <article key={quest.id} className={className('quest-card', completed && 'complete')}>
+                  <article
+                    key={quest.id}
+                    className={className("quest-card", completed && "complete")}
+                  >
                     <div className="quest-icon" style={{ color: config.color }}>
                       <Icon size={22} />
                     </div>
                     <div>
                       <h3>{quest.title}</h3>
                       <p>
-                        {config.label} · {difficultyConfig[quest.difficulty].label} · {quest.estimate} min ·{' '}
-                        {quest.recurrence}
+                        {config.label} ·{" "}
+                        {difficultyConfig[quest.difficulty].label} ·{" "}
+                        {quest.estimate} min · {quest.recurrence}
                       </p>
                     </div>
                     <div className="quest-actions">
@@ -606,10 +728,20 @@ export default function App() {
                         className="icon-button"
                         onClick={() => completeQuest(quest)}
                         disabled={completed}
-                        title={completed ? 'Completed today' : 'Complete quest'}
-                        aria-label={completed ? 'Completed today' : 'Complete quest'}
+                        title={completed ? "Completed today" : "Complete quest"}
+                        aria-label={
+                          completed ? "Completed today" : "Complete quest"
+                        }
                       >
                         <CheckCircle2 size={20} />
+                      </button>
+                      <button
+                        className="icon-button"
+                        onClick={() => startEditingQuest(quest)}
+                        title="Edit quest"
+                        aria-label="Edit quest"
+                      >
+                        <Pencil size={18} />
                       </button>
                       <button
                         className="icon-button danger"
@@ -621,7 +753,7 @@ export default function App() {
                       </button>
                     </div>
                   </article>
-                )
+                );
               })
             )}
           </div>
@@ -656,13 +788,19 @@ export default function App() {
             <div className="section-heading compact">
               <div>
                 <p className="eyebrow">Achievements</p>
-                <h2>{unlockedAchievements.length}/{state.achievements.length} unlocked</h2>
+                <h2>
+                  {unlockedAchievements.length}/{state.achievements.length}{" "}
+                  unlocked
+                </h2>
               </div>
               <ChevronRight size={22} />
             </div>
             <div className="achievement-list">
               {state.achievements.map((achievement) => (
-                <div key={achievement.id} className={className(!achievement.unlockedAt && 'locked')}>
+                <div
+                  key={achievement.id}
+                  className={className(!achievement.unlockedAt && "locked")}
+                >
                   <Trophy size={18} />
                   <span>{achievement.title}</span>
                 </div>
@@ -701,5 +839,5 @@ export default function App() {
         </aside>
       </section>
     </main>
-  )
+  );
 }
